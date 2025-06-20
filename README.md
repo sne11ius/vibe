@@ -58,4 +58,4 @@ Beiträge sind willkommen! Öffne einfach einen Pull Request oder ein Issue.
 
 ## 📄 Lizenz
 
-EUPL (European Union Public License) 1.2
+[EUPL (European Union Public License) 1.2](LICENSE)
