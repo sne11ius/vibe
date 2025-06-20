@@ -134,6 +134,14 @@ def type_german_text(text):
         '>': '>',   # Greater than
         '`': '`',   # Backtick
         '~': '~',   # Tilde
+        # Deutsche Umlaute
+        'ä': 'ä',   # a umlaut
+        'ö': 'ö',   # o umlaut
+        'ü': 'ü',   # u umlaut
+        'ß': 'ß',   # eszett
+        'Ä': 'Ä',   # A umlaut
+        'Ö': 'Ö',   # O umlaut
+        'Ü': 'Ü',   # U umlaut
     }
     
     for char in text:
@@ -143,6 +151,20 @@ def type_german_text(text):
                 # Use the direct character mapping
                 keyboard_controller.press(direct_char_map[char])
                 keyboard_controller.release(direct_char_map[char])
+            # Special handling for German umlauts
+            elif char in ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü']:
+                # Try multiple approaches for umlauts
+                try:
+                    # First try direct typing
+                    keyboard_controller.type(char)
+                except Exception:
+                    try:
+                        # Then try press/release
+                        keyboard_controller.press(char)
+                        keyboard_controller.release(char)
+                    except Exception:
+                        # If all else fails, print a warning
+                        print(f"Warning: Could not type umlaut '{char}'")
             elif char in german_char_map:
                 key_combo = german_char_map[char]
                 if isinstance(key_combo, list):
@@ -188,8 +210,19 @@ def type_german_text(text):
             # Try to type the character directly as a fallback
             try:
                 keyboard_controller.type(char)
-            except:
-                pass
+            except Exception:
+                # Last resort: try to map umlauts to their ASCII equivalents
+                umlaut_map = {
+                    'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+                    'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue'
+                }
+                if char in umlaut_map:
+                    for replacement_char in umlaut_map[char]:
+                        try:
+                            keyboard_controller.press(replacement_char)
+                            keyboard_controller.release(replacement_char)
+                        except Exception:
+                            pass
         
         # Add a small delay between keystrokes
         time.sleep(0.01)
