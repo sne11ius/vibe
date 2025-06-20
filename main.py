@@ -3,9 +3,77 @@ import logging
 from pynput import keyboard
 from pynput.keyboard import Key, Controller
 import time
+import sys
+import sounddevice as sd
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QHBoxLayout
+from PyQt5.QtCore import Qt
 
 # Initialize the keyboard controller
 keyboard_controller = Controller()
+
+
+class AudioDeviceSelector(QDialog):
+    """Dialog zur Auswahl des Audioeingabegeräts"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.selected_device_index = None
+        self.setWindowTitle("🎤 Vibe - Audioeingabegerät auswählen")
+        self.setMinimumWidth(400)
+        self.initUI()
+        
+    def initUI(self):
+        layout = QVBoxLayout()
+        
+        # Titel
+        title_label = QLabel("<h2>Vibe Spracherkennung</h2>")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
+        
+        # Erklärungstext
+        info_label = QLabel("Bitte wählen Sie Ihr Mikrofon aus der Liste:")
+        layout.addWidget(info_label)
+        
+        # Geräteliste abrufen
+        devices = sd.query_devices()
+        input_devices = []
+        
+        # Nur Eingabegeräte anzeigen
+        for i, device in enumerate(devices):
+            if device['max_input_channels'] > 0:
+                name = f"{device['name']} (Kanäle: {device['max_input_channels']})"
+                input_devices.append((i, name))
+        
+        # Dropdown für Geräteauswahl
+        self.device_combo = QComboBox()
+        for idx, name in input_devices:
+            self.device_combo.addItem(name, idx)
+        
+        # Standardgerät auswählen (Index 11, falls vorhanden)
+        default_index = 11
+        for i in range(self.device_combo.count()):
+            if self.device_combo.itemData(i) == default_index:
+                self.device_combo.setCurrentIndex(i)
+                break
+        
+        layout.addWidget(self.device_combo)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        button_layout.addWidget(ok_button)
+        
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_button)
+        
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+    
+    def get_selected_device(self):
+        """Gibt den Index des ausgewählten Geräts zurück"""
+        return self.device_combo.currentData()
 
 
 # Complete German QWERTZ to US QWERTY character mapping
@@ -255,13 +323,27 @@ def process_text(text):
 
 if __name__ == '__main__':
     print("Vibe Spracherkennung wird initialisiert...")
+    
+    # GUI-Anwendung initialisieren
+    app = QApplication(sys.argv)
+    
+    # Dialog zur Geräteauswahl anzeigen
+    device_selector = AudioDeviceSelector()
+    if device_selector.exec_() != QDialog.Accepted:
+        print("Abgebrochen. Beende Anwendung.")
+        sys.exit(0)
+    
+    # Ausgewähltes Gerät abrufen
+    selected_device = device_selector.get_selected_device()
+    print(f"Ausgewähltes Mikrofon: Index {selected_device}")
+    
     try:
         # Try to use CUDA first
         recorder = AudioToTextRecorder(
             model="medium",  # Use the multilingual model
             language="de",   # Set language to German
             device="cuda",   # Use CUDA for faster processing
-            input_device_index=11,  # Specify the microphone device index
+            input_device_index=selected_device,  # Use selected microphone device
             ensure_sentence_starting_uppercase=False,
             ensure_sentence_ends_with_period=False,
             level=logging.INFO,
@@ -275,7 +357,7 @@ if __name__ == '__main__':
             model="medium",  # Use the multilingual model
             language="de",   # Set language to German
             device="cpu",    # Fallback to CPU
-            input_device_index=11,  # Specify the microphone device index
+            input_device_index=selected_device,  # Use selected microphone device
             ensure_sentence_starting_uppercase=False,
             ensure_sentence_ends_with_period=False,
             level=logging.INFO,

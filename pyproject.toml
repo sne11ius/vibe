@@ -5,11 +5,13 @@ description = "Voice Input By Emulation"
 readme = "README.md"
 requires-python = ">=3.10,<3.11" # Python 3.10
 dependencies = [
-    "pyautogui>=0.9.54",
+    "pynput>=1.7.6",
     "realtimestt>=0.3.104",
     "torch==2.2.0+cu121",
     "torchaudio==2.2.0+cu121",
     "numpy<2",
+    "PyQt5>=5.15.9",
+    "sounddevice>=0.4.6",
 ]
 
 [tool.uv]
