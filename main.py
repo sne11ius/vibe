@@ -13,12 +13,12 @@ keyboard_controller = Controller()
 
 
 class AudioDeviceSelector(QDialog):
-    """Dialog zur Auswahl des Audioeingabegeräts"""
+    """Dialog zur Auswahl des Audioeingabegeräts mit Buttons"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.selected_device_index = None
         self.setWindowTitle("🎤 Vibe - Audioeingabegerät auswählen")
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(500)
         self.initUI()
         
     def initUI(self):
@@ -30,7 +30,8 @@ class AudioDeviceSelector(QDialog):
         layout.addWidget(title_label)
         
         # Erklärungstext
-        info_label = QLabel("Bitte wählen Sie Ihr Mikrofon aus der Liste:")
+        info_label = QLabel("<b>Wählen Sie Ihr Mikrofon mit einem Klick:</b>")
+        info_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(info_label)
         
         # Geräteliste abrufen
@@ -40,40 +41,58 @@ class AudioDeviceSelector(QDialog):
         # Nur Eingabegeräte anzeigen
         for i, device in enumerate(devices):
             if device['max_input_channels'] > 0:
-                name = f"{device['name']} (Kanäle: {device['max_input_channels']})"
-                input_devices.append((i, name))
+                name = f"{device['name']}"
+                channels = device['max_input_channels']
+                input_devices.append((i, name, channels))
         
-        # Dropdown für Geräteauswahl
-        self.device_combo = QComboBox()
-        for idx, name in input_devices:
-            self.device_combo.addItem(name, idx)
+        # Buttons für jedes Gerät erstellen
+        self.buttons_group = QVBoxLayout()
+        self.selected_device_index = None
         
-        # Standardgerät auswählen (Index 11, falls vorhanden)
+        # Standardgerät (für Hervorhebung)
         default_index = 11
-        for i in range(self.device_combo.count()):
-            if self.device_combo.itemData(i) == default_index:
-                self.device_combo.setCurrentIndex(i)
-                break
         
-        layout.addWidget(self.device_combo)
+        # Buttons für jedes Gerät erstellen
+        for idx, name, channels in input_devices:
+            # Button mit Geräteinformationen
+            device_button = QPushButton(f"🎙️ {name}\nKanäle: {channels} | Index: {idx}")
+            device_button.setMinimumHeight(60)  # Höhere Buttons für bessere Klickbarkeit
+            
+            # Stil für bessere Sichtbarkeit
+            if idx == default_index:
+                device_button.setStyleSheet(
+                    "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }"
+                    "QPushButton:hover { background-color: #45a049; }"
+                )
+            else:
+                device_button.setStyleSheet(
+                    "QPushButton { background-color: #f0f0f0; }"
+                    "QPushButton:hover { background-color: #e0e0e0; }"
+                )
+            
+            # Funktion zum Auswählen und Schließen
+            def make_device_selector(device_idx):
+                def select_device():
+                    self.selected_device_index = device_idx
+                    self.accept()
+                return select_device
+            
+            device_button.clicked.connect(make_device_selector(idx))
+            self.buttons_group.addWidget(device_button)
         
-        # Buttons
-        button_layout = QHBoxLayout()
+        layout.addLayout(self.buttons_group)
         
-        ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
-        button_layout.addWidget(ok_button)
-        
+        # Abbrechen-Button unten
         cancel_button = QPushButton("Abbrechen")
         cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_button)
+        cancel_button.setStyleSheet("QPushButton { color: #f44336; }")
+        layout.addWidget(cancel_button)
         
-        layout.addLayout(button_layout)
         self.setLayout(layout)
     
     def get_selected_device(self):
         """Gibt den Index des ausgewählten Geräts zurück"""
-        return self.device_combo.currentData()
+        return self.selected_device_index
 
 
 # Complete German QWERTZ to US QWERTY character mapping
@@ -335,7 +354,21 @@ if __name__ == '__main__':
     
     # Ausgewähltes Gerät abrufen
     selected_device = device_selector.get_selected_device()
-    print(f"Ausgewähltes Mikrofon: Index {selected_device}")
+    if selected_device is None:
+        print("Kein Gerät ausgewählt. Beende Anwendung.")
+        sys.exit(0)
+    
+    print(f"🎙️ Ausgewähltes Mikrofon: Index {selected_device}")
+    
+    # Geräteinformationen anzeigen
+    try:
+        devices = sd.query_devices()
+        device_info = devices[selected_device]
+        print(f"Gerätname: {device_info['name']}")
+        print(f"Kanäle: {device_info['max_input_channels']}")
+    except Exception as e:
+        print(f"Konnte Geräteinformationen nicht abrufen: {e}")
+
     
     try:
         # Try to use CUDA first
