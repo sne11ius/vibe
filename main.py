@@ -236,23 +236,53 @@ f9_is_pressed = False
 logging.basicConfig(level=logging.INFO)
 
 def process_text(text):
+    # Check if we got any text to process
+    if not text or text.strip() == "":
+        print("⚠️ Keine Sprache erkannt. Bitte versuchen Sie es erneut.")
+        return
+        
+    print(f"📝 Erkannter Text: '{text}'")
+    
     # Type the transcribed text
-    type_german_text(text)
-    # Explicitly press Enter key after typing the text
-    keyboard_controller.press(Key.enter)
-    keyboard_controller.release(Key.enter)
+    try:
+        type_german_text(text)
+        # Explicitly press Enter key after typing the text
+        keyboard_controller.press(Key.enter)
+        keyboard_controller.release(Key.enter)
+    except Exception as e:
+        print(f"❌ Fehler beim Tippen des Textes: {str(e)}")
+
 
 if __name__ == '__main__':
-    print("Wait until it says 'speak now'")
-    recorder = AudioToTextRecorder(
-        device="cuda",
-        model="medium",
-        language="de",
-        ensure_sentence_starting_uppercase=False,
-        ensure_sentence_ends_with_period=False,
-        input_device_index=11,
-        level=logging.INFO,
-    )
+    print("Vibe Spracherkennung wird initialisiert...")
+    try:
+        # Try to use CUDA first
+        recorder = AudioToTextRecorder(
+            model="medium",  # Use the multilingual model
+            language="de",   # Set language to German
+            device="cuda",   # Use CUDA for faster processing
+            input_device_index=11,  # Specify the microphone device index
+            ensure_sentence_starting_uppercase=False,
+            ensure_sentence_ends_with_period=False,
+            level=logging.INFO,
+        )
+        print("✅ CUDA device erfolgreich initialisiert.")
+    except Exception as e:
+        print(f"⚠️ CUDA konnte nicht initialisiert werden: {str(e)}")
+        print("Fallback auf CPU...")
+        # Fallback to CPU if CUDA is not available
+        recorder = AudioToTextRecorder(
+            model="medium",  # Use the multilingual model
+            language="de",   # Set language to German
+            device="cpu",    # Fallback to CPU
+            input_device_index=11,  # Specify the microphone device index
+            ensure_sentence_starting_uppercase=False,
+            ensure_sentence_ends_with_period=False,
+            level=logging.INFO,
+        )
+        print("✅ CPU-Modus aktiviert.")
+    print("Drücke F9, um die Aufnahme zu starten und loszulassen, um zu transkribieren.")
+
     def on_key_press(key):
         """Function called when any key is pressed (key down)"""
         global f9_is_pressed
@@ -261,10 +291,11 @@ if __name__ == '__main__':
             if key == keyboard.Key.f9:
                 # Only trigger if F9 wasn't already pressed
                 if not f9_is_pressed:
+                    print("F9 key DOWN at %s" % time.strftime("%H:%M:%S"))
+                    print("🎤 Aufnahme gestartet - sprechen Sie jetzt...")
                     f9_is_pressed = True
-                    print(f"F9 key DOWN at {time.strftime('%H:%M:%S')}")
                     recorder.start()
-                    # Add your custom key down logic here
+                    return True           # Add your custom key down logic here
         except AttributeError:
             # Special keys (like F9) are handled above
             pass
@@ -276,9 +307,11 @@ if __name__ == '__main__':
             if key == keyboard.Key.f9:
                 f9_is_pressed = False
                 print(f"F9 key UP at {time.strftime('%H:%M:%S')}")
-                # Add your custom key up logic here
+                print("💬 Transkribiere Sprache...")
                 recorder.stop()
                 recorder.text(process_text)
+                print("✨ Transkription abgeschlossen.")
+
         except AttributeError:
             # Special keys (like F9) are handled above
             pass
