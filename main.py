@@ -212,6 +212,8 @@ def process_text(text):
 if __name__ == '__main__':
     print("Wait until it says 'speak now'")
     recorder = AudioToTextRecorder(
+        device="cuda",
+        model="medium.en",
         language="en",
         ensure_sentence_starting_uppercase=False,
         ensure_sentence_ends_with_period=False,
