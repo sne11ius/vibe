@@ -91,7 +91,7 @@ def type_german_text(text):
         'slash': '/',
         'backslash': '\\',
         'semicolon': ';',
-        'apostrophe': "'",
+        'apostrophe': "'",  # This is the key for apostrophe/single quote
         'bracketleft': '[',
         'bracketright': ']',
         'minus': '-',
@@ -100,9 +100,50 @@ def type_german_text(text):
         'numbersign': '#',
     }
     
+    # Add direct character mappings for common special characters
+    direct_char_map = {
+        "'": "'",  # Apostrophe/single quote
+        '"': '"',  # Double quote
+        '!': '!',   # Exclamation mark
+        '?': '?',   # Question mark
+        '.': '.',   # Period
+        ',': ',',   # Comma
+        ';': ';',   # Semicolon
+        ':': ':',   # Colon
+        '@': '@',   # At symbol
+        '#': '#',   # Hash/pound
+        '$': '$',   # Dollar
+        '%': '%',   # Percent
+        '^': '^',   # Caret
+        '&': '&',   # Ampersand
+        '*': '*',   # Asterisk
+        '(': '(',   # Open parenthesis
+        ')': ')',   # Close parenthesis
+        '-': '-',   # Hyphen/minus
+        '_': '_',   # Underscore
+        '+': '+',   # Plus
+        '=': '=',   # Equals
+        '[': '[',   # Open square bracket
+        ']': ']',   # Close square bracket
+        '{': '{',   # Open curly brace
+        '}': '}',   # Close curly brace
+        '|': '|',   # Pipe
+        '\\': '\\', # Backslash
+        '/': '/',   # Forward slash
+        '<': '<',   # Less than
+        '>': '>',   # Greater than
+        '`': '`',   # Backtick
+        '~': '~',   # Tilde
+    }
+    
     for char in text:
         try:
-            if char in german_char_map:
+            # First check if it's a direct character we can type
+            if char in direct_char_map:
+                # Use the direct character mapping
+                keyboard_controller.press(direct_char_map[char])
+                keyboard_controller.release(direct_char_map[char])
+            elif char in german_char_map:
                 key_combo = german_char_map[char]
                 if isinstance(key_combo, list):
                     # Handle modifier keys (shift, altgr, etc.)
@@ -144,6 +185,11 @@ def type_german_text(text):
                 keyboard_controller.release(char)
         except Exception as e:
             print(f"Warning: Could not type '{char}': {str(e)}")
+            # Try to type the character directly as a fallback
+            try:
+                keyboard_controller.type(char)
+            except:
+                pass
         
         # Add a small delay between keystrokes
         time.sleep(0.01)
