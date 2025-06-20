@@ -10,9 +10,9 @@ keyboard_controller = Controller()
 
 # Complete German QWERTZ to US QWERTY character mapping
 german_char_map = {
-    # Basic letter swaps
-    'z': 'y',
-    'y': 'z',
+    # Basic letter swaps - commented out as we're using US layout
+    # 'z': 'y',
+    # 'y': 'z',
 
     # Number row special characters (Shift + number)
     '!': ['shift', '1'],    # Same as US
@@ -82,54 +82,68 @@ german_char_map = {
 
 def type_german_text(text):
     """Type text correctly on German keyboard layout using pynput"""
+    # Define a simplified mapping for special keys
+    # We'll just use character-by-character typing for most keys
+    special_key_map = {
+        'space': ' ',
+        'period': '.',
+        'comma': ',',
+        'slash': '/',
+        'backslash': '\\',
+        'semicolon': ';',
+        'apostrophe': "'",
+        'bracketleft': '[',
+        'bracketright': ']',
+        'minus': '-',
+        'equal': '=',
+        'grave': '`',
+        'numbersign': '#',
+    }
+    
     for char in text:
-        if char in german_char_map:
-            key_combo = german_char_map[char]
-            if isinstance(key_combo, list):
-                # Handle modifier keys (shift, altgr, etc.)
-                if key_combo[0] == 'shift':
-                    keyboard_controller.press(Key.shift)
-                    try:
-                        # Try to handle the key as a special key
-                        try:
-                            special_key = getattr(Key, key_combo[1])
-                            keyboard_controller.press(special_key)
-                            keyboard_controller.release(special_key)
-                        except AttributeError:
-                            # If not a special key, type it as a character
+        try:
+            if char in german_char_map:
+                key_combo = german_char_map[char]
+                if isinstance(key_combo, list):
+                    # Handle modifier keys (shift, altgr, etc.)
+                    if key_combo[0] == 'shift':
+                        # For shift combinations, we'll directly type the shifted character
+                        # if it's in our special key map
+                        if key_combo[1] in special_key_map:
+                            # Type the character directly
+                            keyboard_controller.press(Key.shift)
+                            keyboard_controller.press(special_key_map[key_combo[1]])
+                            keyboard_controller.release(special_key_map[key_combo[1]])
+                            keyboard_controller.release(Key.shift)
+                        else:
+                            # Just type the character directly
+                            keyboard_controller.press(Key.shift)
                             keyboard_controller.press(key_combo[1])
                             keyboard_controller.release(key_combo[1])
-                    finally:
-                        keyboard_controller.release(Key.shift)
-                elif key_combo[0] == 'altgr':
-                    keyboard_controller.press(Key.alt_gr)
-                    try:
-                        # Try to handle the key as a special key
-                        try:
-                            special_key = getattr(Key, key_combo[1])
-                            keyboard_controller.press(special_key)
-                            keyboard_controller.release(special_key)
-                        except AttributeError:
-                            # If not a special key, type it as a character
-                            keyboard_controller.press(key_combo[1])
-                            keyboard_controller.release(key_combo[1])
-                    finally:
-                        keyboard_controller.release(Key.alt_gr)
+                            keyboard_controller.release(Key.shift)
+                    elif key_combo[0] == 'altgr':
+                        # For AltGr combinations, we'll try to use the character directly
+                        # if possible, otherwise skip it
+                        print(f"Warning: AltGr combination for '{char}' might not work on Wayland")
+                        # Just try to type the character directly
+                        keyboard_controller.press(char)
+                        keyboard_controller.release(char)
+                else:
+                    # Handle single keys by using our special key map
+                    if key_combo in special_key_map:
+                        # Type the mapped character directly
+                        keyboard_controller.press(special_key_map[key_combo])
+                        keyboard_controller.release(special_key_map[key_combo])
+                    else:
+                        # Just try to type the key directly
+                        keyboard_controller.press(key_combo)
+                        keyboard_controller.release(key_combo)
             else:
-                # Handle single keys
-                try:
-                    # Try to handle the key as a special key
-                    special_key = getattr(Key, key_combo)
-                    keyboard_controller.press(special_key)
-                    keyboard_controller.release(special_key)
-                except AttributeError:
-                    # If not a special key, type it as a character
-                    keyboard_controller.press(key_combo)
-                    keyboard_controller.release(key_combo)
-        else:
-            # For regular letters and numbers that are the same
-            keyboard_controller.press(char)
-            keyboard_controller.release(char)
+                # For regular letters and numbers that are the same
+                keyboard_controller.press(char)
+                keyboard_controller.release(char)
+        except Exception as e:
+            print(f"Warning: Could not type '{char}': {str(e)}")
         
         # Add a small delay between keystrokes
         time.sleep(0.01)
@@ -143,7 +157,11 @@ f9_is_pressed = False
 logging.basicConfig(level=logging.INFO)
 
 def process_text(text):
-    type_german_text(text + "\n")
+    # Type the transcribed text
+    type_german_text(text)
+    # Explicitly press Enter key after typing the text
+    keyboard_controller.press(Key.enter)
+    keyboard_controller.release(Key.enter)
 
 if __name__ == '__main__':
     print("Wait until it says 'speak now'")
