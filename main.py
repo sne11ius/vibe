@@ -213,13 +213,10 @@ if __name__ == '__main__':
     print("Wait until it says 'speak now'")
     recorder = AudioToTextRecorder(
         device="cuda",
-        model="medium.en",
-        language="en",
+        model="medium",
+        language="de",
         ensure_sentence_starting_uppercase=False,
         ensure_sentence_ends_with_period=False,
-        # Using webcam microphone (C922 Pro Stream Webcam)
-        # 11 would be pulseaudio
-        # Use list_devices.py to find the correct index
         input_device_index=11,
         level=logging.INFO,
     )
