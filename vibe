@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Run the application with proper CUDA library paths
+bash ./run.sh

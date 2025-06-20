@@ -1,0 +1,19 @@
+[project]
+name = "vibe"
+version = "0.1.0"
+description = "Voice Input By Emulation"
+readme = "README.md"
+requires-python = ">=3.10,<3.11" # Python 3.10
+dependencies = [
+    "pyautogui>=0.9.54",
+    "realtimestt>=0.3.104",
+    "torch==2.2.0+cu121",
+    "torchaudio==2.2.0+cu121",
+    "numpy<2",
+]
+
+[tool.uv]
+
+[[tool.uv.index]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu121"
