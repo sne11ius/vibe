@@ -27,12 +27,12 @@ Vibe ist eine Spracherkennungsanwendung, die deine gesprochenen Worte in Echtzei
 git clone https://github.com/sne11ius/vibe.git
 cd vibe
 
-# Virtuelle Umgebung erstellen und aktivieren
-python -m venv .venv
+# Virtuelle Umgebung mit UV erstellen und aktivieren
+uv venv
 source .venv/bin/activate
 
-# Abhängigkeiten installieren
-pip install -r requirements.txt
+# Abhängigkeiten mit UV installieren
+uv pip install -e .
 ```
 
 ## 🎮 Verwendung
