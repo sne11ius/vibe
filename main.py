@@ -49,26 +49,16 @@ class AudioDeviceSelector(QDialog):
         self.buttons_group = QVBoxLayout()
         self.selected_device_index = None
         
-        # Standardgerät (für Hervorhebung)
-        default_index = 11
-        
         # Buttons für jedes Gerät erstellen
         for idx, name, channels in input_devices:
             # Button mit Geräteinformationen
             device_button = QPushButton(f"🎙️ {name}\nKanäle: {channels} | Index: {idx}")
             device_button.setMinimumHeight(60)  # Höhere Buttons für bessere Klickbarkeit
             
-            # Stil für bessere Sichtbarkeit
-            if idx == default_index:
-                device_button.setStyleSheet(
-                    "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }"
-                    "QPushButton:hover { background-color: #45a049; }"
-                )
-            else:
-                device_button.setStyleSheet(
-                    "QPushButton { background-color: #f0f0f0; }"
-                    "QPushButton:hover { background-color: #e0e0e0; }"
-                )
+            device_button.setStyleSheet(
+                "QPushButton { background-color: #f0f0f0; }"
+                "QPushButton:hover { background-color: #e0e0e0; }"
+            )
             
             # Funktion zum Auswählen und Schließen
             def make_device_selector(device_idx):
@@ -314,9 +304,6 @@ def type_german_text(text):
         # Add a small delay between keystrokes
         time.sleep(0.01)
 
-# Usage example:
-# type_german_text("Hello! This costs 5€ @ example.com")
-
 # Track key state to prevent repeats
 f9_is_pressed = False
 
@@ -371,7 +358,6 @@ if __name__ == '__main__':
 
     
     try:
-        # Try to use CUDA first
         recorder = AudioToTextRecorder(
             model="medium",  # Use the multilingual model
             language="de",   # Set language to German
@@ -384,18 +370,8 @@ if __name__ == '__main__':
         print("✅ CUDA device erfolgreich initialisiert.")
     except Exception as e:
         print(f"⚠️ CUDA konnte nicht initialisiert werden: {str(e)}")
-        print("Fallback auf CPU...")
-        # Fallback to CPU if CUDA is not available
-        recorder = AudioToTextRecorder(
-            model="medium",  # Use the multilingual model
-            language="de",   # Set language to German
-            device="cpu",    # Fallback to CPU
-            input_device_index=selected_device,  # Use selected microphone device
-            ensure_sentence_starting_uppercase=False,
-            ensure_sentence_ends_with_period=False,
-            level=logging.INFO,
-        )
-        print("✅ CPU-Modus aktiviert.")
+        raise e
+
     print("Drücke F9, um die Aufnahme zu starten und loszulassen, um zu transkribieren.")
 
     def on_key_press(key):
