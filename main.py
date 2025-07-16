@@ -305,7 +305,9 @@ def type_german_text(text):
         time.sleep(0.01)
 
 # Track key state to prevent repeats
-f9_is_pressed = False
+ctrl_shift_f9_pressed = False
+ctrl_pressed = False
+shift_pressed = False
 
 logging.basicConfig(level=logging.INFO)
 
@@ -372,39 +374,51 @@ if __name__ == '__main__':
         print(f"⚠️ CUDA konnte nicht initialisiert werden: {str(e)}")
         raise e
 
-    print("Drücke F9, um die Aufnahme zu starten und loszulassen, um zu transkribieren.")
+    print("Drücke Ctrl+Shift+F9, um die Aufnahme zu starten und loszulassen, um zu transkribieren.")
 
     def on_key_press(key):
         """Function called when any key is pressed (key down)"""
-        global f9_is_pressed
+        global ctrl_shift_f9_pressed, ctrl_pressed, shift_pressed
 
         try:
-            if key == keyboard.Key.f9:
-                # Only trigger if F9 wasn't already pressed
-                if not f9_is_pressed:
-                    print("F9 key DOWN at %s" % time.strftime("%H:%M:%S"))
+            # Track modifier keys
+            if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+                ctrl_pressed = True
+            elif key == keyboard.Key.shift_l or key == keyboard.Key.shift_r:
+                shift_pressed = True
+            elif key == keyboard.Key.f9:
+                # Check if both Ctrl and Shift are pressed
+                if ctrl_pressed and shift_pressed and not ctrl_shift_f9_pressed:
+                    print("Ctrl+Shift+F9 key DOWN at %s" % time.strftime("%H:%M:%S"))
                     print("🎤 Aufnahme gestartet - sprechen Sie jetzt...")
-                    f9_is_pressed = True
+                    ctrl_shift_f9_pressed = True
                     recorder.start()
-                    return True           # Add your custom key down logic here
+                    return True
         except AttributeError:
-            # Special keys (like F9) are handled above
+            # Special keys are handled above
             pass
     def on_key_release(key):
         """Function called when any key is released (key up)"""
-        global f9_is_pressed
+        global ctrl_shift_f9_pressed, ctrl_pressed, shift_pressed
 
         try:
-            if key == keyboard.Key.f9:
-                f9_is_pressed = False
-                print(f"F9 key UP at {time.strftime('%H:%M:%S')}")
-                print("💬 Transkribiere Sprache...")
-                recorder.stop()
-                recorder.text(process_text)
-                print("✨ Transkription abgeschlossen.")
+            # Track modifier key releases
+            if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+                ctrl_pressed = False
+            elif key == keyboard.Key.shift_l or key == keyboard.Key.shift_r:
+                shift_pressed = False
+            elif key == keyboard.Key.f9:
+                # Only stop recording if we were actually recording with the combo
+                if ctrl_shift_f9_pressed:
+                    ctrl_shift_f9_pressed = False
+                    print(f"Ctrl+Shift+F9 key UP at {time.strftime('%H:%M:%S')}")
+                    print("💬 Transkribiere Sprache...")
+                    recorder.stop()
+                    recorder.text(process_text)
+                    print("✨ Transkription abgeschlossen.")
 
         except AttributeError:
-            # Special keys (like F9) are handled above
+            # Special keys are handled above
             pass
 
     try:
